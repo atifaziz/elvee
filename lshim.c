@@ -48,6 +48,14 @@
 
 #define realpath(rel, abs) _fullpath(abs, rel, sizeof(abs) / sizeof((abs)[0]))
 
+#define PATH_SEPARATOR_CHAR '\\'
+#define PATH_SEPARATOR      "\\"
+
+#else // *nix
+
+#define PATH_SEPARATOR_CHAR '/'
+#define PATH_SEPARATOR      "/"
+
 #endif
 
 #include "include/struct.h"
@@ -61,9 +69,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    char* pathsep = strrchr(path, '/');
-    if (!pathsep)
-        pathsep = strrchr(path, '\\');
+    char* pathsep = strrchr(path, PATH_SEPARATOR_CHAR);
     strcpy(fname, pathsep + 1);
     *(pathsep + 1) = 0;
 
@@ -103,9 +109,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
-#ifdef WINDOWS
+    sprintf(path, "%s%s%s%s", path, lname, PATH_SEPARATOR, fname);
 
-    sprintf(path, "%s%s\\%s", path, lname, fname);
+#ifdef WINDOWS
 
     char* ext = strrchr(fname, '.');
     if (ext) {
@@ -116,8 +122,6 @@ int main(int argc, char** argv)
     return _spawnv(_P_WAIT, path, argv);
 
 #else // !WINDOWS
-
-    sprintf(path, "%s%s/%s", path, lname, fname);
 
     pid_t pid = fork();
     if (pid < 0) {
