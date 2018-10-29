@@ -19,22 +19,46 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#if defined(_WIN64) || defined(_WIN32) && !defined(WINDOWS)
+#define WINDOWS
+#endif
+
 #include <string.h>
+#ifdef WINDOWS
+#include "include/win/dirent.h"
+#else
 #include <dirent.h>
+#endif
 #include <errno.h>
 #include <stdio.h>
+#ifdef WINDOWS
+#include "include/struct.h"
+#else
 #include <struct.h>
+#endif
 #include <limits.h>
 #include <stdlib.h>
+#ifndef WINDOWS
 #include <unistd.h>
+#endif
 #include <sys/types.h>
+#ifndef WINDOWS
 #include <sys/wait.h>
+#endif
+
+#ifdef WINDOWS
+
+#include <windows.h>
+#include <process.h>
+
+#define realpath(rel, abs) _fullpath(abs, rel, sizeof(abs) / sizeof((abs)[0]))
+
+#endif
 
 int main(int argc, char** argv)
 {
     char path[PATH_MAX];
     char fname[PATH_MAX];
-    // win32 = _fullpath; https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/fullpath-wfullpath?view=vs-2017
     if (!realpath(argv[0], path)) {
         fprintf(stderr, "Error in directory listing.\n");
         return 1;
@@ -82,6 +106,20 @@ int main(int argc, char** argv)
         return 1;
     }
 
+#ifdef WINDOWS
+
+    sprintf(path, "%s%s\\%s", path, lname, fname);
+
+    char* ext = strrchr(fname, '.');
+    if (ext) {
+        *strrchr(path, '.') = 0;
+    }
+
+    argv[0] = path;
+    return _spawnv(_P_WAIT, path, argv);
+
+#else // !WINDOWS
+
     sprintf(path, "%s%s/%s", path, lname, fname);
 
     pid_t pid = fork();
@@ -100,4 +138,6 @@ int main(int argc, char** argv)
     }
 
     return 0;
+
+#endif // WINDOWS
 }
