@@ -60,6 +60,8 @@
 
 #include "include/struct.h"
 
+#define DIM(x) (sizeof(x) / sizeof((x)[0]))
+
 int main(int argc, char** argv)
 {
     char path[PATH_MAX];
@@ -109,7 +111,10 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    sprintf(path, "%s%s%s%s", path, lname, PATH_SEPARATOR, fname);
+    if (snprintf(path, DIM(path), "%s%s%s%s", path, lname, PATH_SEPARATOR, fname) >= DIM(path)) {
+        fprintf(stderr, "Resulting path is too long!\n");
+        return 1;
+    }
 
 #ifdef WINDOWS
 
