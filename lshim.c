@@ -31,11 +31,6 @@
 #endif
 #include <errno.h>
 #include <stdio.h>
-#ifdef WINDOWS
-#include "include/struct.h"
-#else
-#include <struct.h>
-#endif
 #include <limits.h>
 #include <stdlib.h>
 #ifndef WINDOWS
@@ -54,6 +49,8 @@
 #define realpath(rel, abs) _fullpath(abs, rel, sizeof(abs) / sizeof((abs)[0]))
 
 #endif
+
+#include "include/struct.h"
 
 int main(int argc, char** argv)
 {
