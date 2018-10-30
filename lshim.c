@@ -62,18 +62,27 @@
 
 #define DIM(x) (sizeof(x) / sizeof((x)[0]))
 
+#define print_op_error(op) \
+    fprintf(stderr, "Operation '%s' failed due to:\n%s\nat: %s:%d\n", (op), strerror(errno), __FILE__, __LINE__)
+
+#define print_app_error(msg) \
+    fprintf(stderr, "%s\nat: %s:%d\n", (msg), __FILE__, __LINE__)
+
+#define printf_app_error(msg, ...) \
+    fprintf(stderr, msg "\nat: %s:%d\n", __VA_ARGS__, __FILE__, __LINE__)
+
 int main(int argc, char **argv)
 {
     char path[PATH_MAX];
     char fname[NAME_MAX];
     if (!realpath(argv[0], path)) {
-        fprintf(stderr, "Error in directory listing.\n");
+        print_op_error("realpath");
         return 1;
     }
 
     char *pathsep = strrchr(path, PATH_SEPARATOR_CHAR);
     if (strlen(pathsep + 1) >= DIM(fname)) {
-        fprintf(stderr, "File name is too long.\n");
+        printf_app_error("File name is too long: %s", pathsep + 1);
         return 1;
     }
     strcpy(fname, pathsep + 1);
@@ -81,7 +90,7 @@ int main(int argc, char **argv)
 
     DIR *d; d = opendir(path);
     if (!d) {
-        fprintf(stderr, "Error listing directory.\n");
+        print_op_error("opendir");
         return 1;
     }
 
@@ -109,14 +118,16 @@ int main(int argc, char **argv)
         }
     }
 
-    closedir(d);
     if (errno) {
-        fprintf(stderr, "Error listing directory.\n");
+        print_op_error("readdir");
+        closedir(d);
         return 1;
     }
 
+    closedir(d);
+
     if (snprintf(path, DIM(path), "%s%s%s%s", path, lname, PATH_SEPARATOR, fname) >= DIM(path)) {
-        fprintf(stderr, "Resulting path is too long!\n");
+        print_app_error("Final path is too long!");
         return 1;
     }
 
@@ -134,7 +145,7 @@ int main(int argc, char **argv)
 
     pid_t pid = fork();
     if (pid < 0) {
-        fprintf(stderr, "Error launching: %s\n", path);
+        printf_app_error("Error launching: %s\nReason: %s", path, strerror(errno));
         return 1;
     } else if (pid) { // fork parent
         int status;
@@ -143,7 +154,7 @@ int main(int argc, char **argv)
              : 1;
     } else { // fork child
         execv(path, argv);
-        fprintf(stderr, "Failed to fork: %s\n", path);
+        printf_app_error("Failed to fork: %s\nReason: %s", path, strerror(errno));
         return 1;
     }
 
