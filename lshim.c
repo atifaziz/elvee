@@ -144,6 +144,10 @@ int main(int argc, char **argv)
 
     char *template = argv[1];
     if (is_lshim) {
+        if (!template) {
+            print_app_error("Missing target template argument.");
+            return 1;
+        }
         vlog("template: %s", template);
         char token[] = PATH_SEPARATOR "?" PATH_SEPARATOR;
         char *tt = strstr(template, token);
