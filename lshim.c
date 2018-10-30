@@ -71,6 +71,8 @@
 #define printf_app_error(msg, ...) \
     fprintf(stderr, msg "\nat: %s:%d\n", __VA_ARGS__, __FILE__, __LINE__)
 
+#define tolower(ch) ((ch) | 0x20)
+
 int main(int argc, char **argv)
 {
     char path[PATH_MAX];
@@ -86,11 +88,33 @@ int main(int argc, char **argv)
         return 1;
     }
     strcpy(fname, pathsep + 1);
-    *(pathsep + 1) = 0;
+    *pathsep = 0;
 
     char *ext = strrchr(fname, '.');
     if (ext) {
         *ext = 0;
+    }
+
+    char *p = fname;
+    int is_lshim =  'l' == tolower(*p++)
+                 && 's' == tolower(*p++)
+                 && 'h' == tolower(*p++)
+                 && 'i' == tolower(*p++)
+                 && 'm' == tolower(*p++);
+
+    char *template = argv[1];
+    if (is_lshim) {
+        char token[] = PATH_SEPARATOR "?" PATH_SEPARATOR;
+        char *tt = strstr(template, token);
+        if (!tt) {
+            printf_app_error("Invalid template argument: %s", template);
+            return 1;
+        }
+        strncpy(path, template, tt - template);
+        path[tt - template] = 0;
+        if (snprintf(fname, DIM(fname), "%s", tt + DIM(token) - 1) >= DIM(fname)) {
+            print_app_error("Trailer path is too long!");
+        }
     }
 
     DIR *d; d = opendir(path);
@@ -131,17 +155,33 @@ int main(int argc, char **argv)
 
     closedir(d);
 
-    if (snprintf(path, DIM(path), "%s%s%s%s", path, lname, PATH_SEPARATOR, fname) >= DIM(path)) {
+    char spawn_path[PATH_MAX];
+    if (snprintf(spawn_path, DIM(spawn_path), "%s%s%s%s%s", path, PATH_SEPARATOR, lname, PATH_SEPARATOR, fname) >= DIM(spawn_path)) {
         print_app_error("Final path is too long!");
         return 1;
     }
 
+    argv[0] = spawn_path;
+
+    if (is_lshim) {
+        char **patched_argv = alloca(argc * sizeof(patched_argv[0]));
+        for (int si = 0, di = 0; si < argc; si++, di++) {
+            if (1 == si) {
+                di--;
+            }
+            else {
+                patched_argv[di] = argv[si];
+            }
+        }
+        patched_argv[argc - 1] = 0;
+        argv = patched_argv;
+    }
+
 #ifdef WINDOWS
 
-    argv[0] = path;
-    intptr_t result = _spawnv(_P_WAIT, path, argv);
+    intptr_t result = _spawnv(_P_WAIT, spawn_path, argv);
     if (result == -1) {
-        printf_app_error("Error launching: %s\nReason: %s", path, strerror(errno));
+        printf_app_error("Error launching: %s\nReason: %s", spawn_path, strerror(errno));
         return 1;
     }
 
@@ -151,7 +191,7 @@ int main(int argc, char **argv)
 
     pid_t pid = fork();
     if (pid < 0) {
-        printf_app_error("Error launching: %s\nReason: %s", path, strerror(errno));
+        printf_app_error("Error launching: %s\nReason: %s", spawn_path, strerror(errno));
         return 1;
     } else if (pid) { // fork parent
         int status;
@@ -159,8 +199,8 @@ int main(int argc, char **argv)
              ? WEXITSTATUS(status)
              : 1;
     } else { // fork child
-        execv(path, argv);
-        printf_app_error("Failed to fork: %s\nReason: %s", path, strerror(errno));
+        execv(spawn_path, argv);
+        printf_app_error("Failed to fork: %s\nReason: %s", spawn_path, strerror(errno));
         return 1;
     }
 
