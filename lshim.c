@@ -153,24 +153,19 @@ int main(int argc, char **argv)
         vlog("dir[%s]: (%d) %s", ignore ? "x" : " ", dir->d_type, dir->d_name);
         if (ignore)
             continue;
-        unsigned int major = 0, minor = 0, patch = 0;
+        int major = 0, minor = 0, patch = 0;
         int tokens = sscanf(dir->d_name, "v%u.%u.%u", &major, &minor, &patch);
-        vlog("tokens: %d.%d.%d (%d)", major, minor, patch, tokens);
+        vlog("tokens: %u.%u.%u (%d)", major, minor, patch, tokens);
         if (!tokens)
             continue;
-        if (major > lmajor) {
-            vlog("win: %d.%d.%d > %d.%d.%d", major, minor, patch, lmajor, lminor, lpatch);
+        if (major > lmajor
+            || (major == lmajor && minor > lminor)
+            || (major == lmajor && minor == lminor && patch > lpatch)) {
+            vlog("upgrade: %u.%u.%u > %u.%u.%u", major, minor, patch, lmajor, lminor, lpatch);
             lmajor = major;
             lminor = minor;
             lpatch = patch;
             strcpy(lname, dir->d_name);
-        } else if (minor > lminor) {
-            vlog("win: %d.%d.%d > %d.%d.%d", major, minor, patch, lmajor, lminor, lpatch);
-            lminor = minor;
-            lpatch = patch;
-        } else if (patch > lpatch) {
-            vlog("win: %d.%d.%d > %d.%d.%d", major, minor, patch, lmajor, lminor, lpatch);
-            lpatch = patch;
         }
     }
 
