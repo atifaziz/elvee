@@ -81,6 +81,9 @@ int verbose = 0;
 #define vlog(format, ...) \
     if (verbose) { log(format, __VA_ARGS__); }
 
+#undef min
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 int main(int argc, char **argv)
 {
     char *verbose_env;
@@ -144,8 +147,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    unsigned int lmajor = 0, lminor = 0, lpatch = 0;
     char lname[fldsiz(dirent, d_name) / sizeof(char)] = { 0 };
+    char lsuffix[DIM(lname)] = { 0 };
+    unsigned int lmajor = 0, lminor = 0, lpatch = 0;
     struct dirent *dir;
 
     while ((errno = 0, dir = readdir(d)) != NULL) {
@@ -154,17 +158,32 @@ int main(int argc, char **argv)
         if (ignore)
             continue;
         int major = 0, minor = 0, patch = 0;
-        int tokens = sscanf(dir->d_name, "v%u.%u.%u", &major, &minor, &patch);
-        vlog("tokens: %u.%u.%u (%d)", major, minor, patch, tokens);
+        char suffix[DIM(lsuffix)] = { 0 };
+        int tokens;
+        if ((tokens = sscanf(dir->d_name, "v%u.%u.%u%s", &major, &minor, &patch, suffix)) < 3) {
+            if ((tokens = sscanf(dir->d_name, "v%u.%u%s", &major, &minor, suffix)) < 2) {
+                tokens = sscanf(dir->d_name, "v%u%s", &major, suffix);
+            }
+        }
         if (!tokens)
             continue;
-        if (major > lmajor
+        int invalid_suffix = *suffix && *suffix != '-';
+        vlog("tokens(%d): %u.%u.%u%s%s", tokens, major, minor, patch, suffix, invalid_suffix ? " (invalid suffix)" : "");
+        if (invalid_suffix)
+            continue;
+        int upgrade
+            =   major > lmajor
             || (major == lmajor && minor > lminor)
-            || (major == lmajor && minor == lminor && patch > lpatch)) {
-            vlog("upgrade: %u.%u.%u > %u.%u.%u", major, minor, patch, lmajor, lminor, lpatch);
+            || (major == lmajor && minor == lminor && patch > lpatch)
+            || (major == lmajor && minor == lminor && patch == lpatch
+                && *lsuffix && *suffix
+                && strncmp(suffix, lsuffix, min(strlen(suffix), strlen(lsuffix))) > 0);
+        vlog("upgrade: %u.%u.%u%s > %u.%u.%u%s ? %s", major, minor, patch, suffix, lmajor, lminor, lpatch, lsuffix, upgrade ? "yes" : "no");
+        if (upgrade) {
             lmajor = major;
             lminor = minor;
             lpatch = patch;
+            strcpy(lsuffix, suffix);
             strcpy(lname, dir->d_name);
         }
     }
