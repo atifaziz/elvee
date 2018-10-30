@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
     while ((errno = 0, dir = readdir(d)) != NULL) {
         int ignore = dir->d_type != DT_DIR || dir->d_name[0] != 'v';
-        vlog("dir[%s]: (%d) %s", ignore ? "x" : " ", dir->d_type, dir->d_name);
+        vlog("dir[%s]: (%x) %s", ignore ? "x" : " ", dir->d_type, dir->d_name);
         if (ignore)
             continue;
         int major = 0, minor = 0, patch = 0;
