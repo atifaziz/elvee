@@ -73,8 +73,24 @@
 
 #define tolower(ch) ((ch) | 0x20)
 
+#define log(format, ...) \
+    fprintf(stderr, "%s(%d):" format "\n", __FILE__, __LINE__, __VA_ARGS__)
+
+int verbose = 0;
+
+#define vlog(format, ...) \
+    if (verbose) { log(format, __VA_ARGS__); }
+
 int main(int argc, char **argv)
 {
+    char *verbose_env;
+    if (!(verbose_env = getenv("LSHIM_VERBOSE"))) {
+        if (!(verbose_env = getenv("lshim_verbose"))) {
+            verbose_env = "0";
+        }
+    }
+    verbose = strcmp("0", verbose_env) ? 1 : 0;
+
     char path[PATH_MAX];
     char fname[NAME_MAX];
     if (!realpath(argv[0], path)) {
@@ -95,6 +111,9 @@ int main(int argc, char **argv)
         *ext = 0;
     }
 
+    vlog("path: %s", path);
+    vlog("fname: %s", fname);
+
     char *p = fname;
     int is_lshim =  'l' == tolower(*p++)
                  && 's' == tolower(*p++)
@@ -104,6 +123,7 @@ int main(int argc, char **argv)
 
     char *template = argv[1];
     if (is_lshim) {
+        vlog("template: %s", template);
         char token[] = PATH_SEPARATOR "?" PATH_SEPARATOR;
         char *tt = strstr(template, token);
         if (!tt) {
@@ -117,6 +137,7 @@ int main(int argc, char **argv)
         }
     }
 
+    vlog("opendir: %s", path);
     DIR *d; d = opendir(path);
     if (!d) {
         print_op_error("opendir");
@@ -128,21 +149,27 @@ int main(int argc, char **argv)
     struct dirent *dir;
 
     while ((errno = 0, dir = readdir(d)) != NULL) {
-        if (dir->d_type != DT_DIR || dir->d_name[0] != 'v')
+        int ignore = dir->d_type != DT_DIR || dir->d_name[0] != 'v';
+        vlog("dir[%s]: (%d) %s", ignore ? "x" : " ", dir->d_type, dir->d_name);
+        if (ignore)
             continue;
         unsigned int major = 0, minor = 0, patch = 0;
         int tokens = sscanf(dir->d_name, "v%u.%u.%u", &major, &minor, &patch);
+        vlog("tokens: %d.%d.%d (%d)", major, minor, patch, tokens);
         if (!tokens)
             continue;
         if (major > lmajor) {
+            vlog("win: %d.%d.%d > %d.%d.%d", major, minor, patch, lmajor, lminor, lpatch);
             lmajor = major;
             lminor = minor;
             lpatch = patch;
             strcpy(lname, dir->d_name);
         } else if (minor > lminor) {
+            vlog("win: %d.%d.%d > %d.%d.%d", major, minor, patch, lmajor, lminor, lpatch);
             lminor = minor;
             lpatch = patch;
         } else if (patch > lpatch) {
+            vlog("win: %d.%d.%d > %d.%d.%d", major, minor, patch, lmajor, lminor, lpatch);
             lpatch = patch;
         }
     }
@@ -173,8 +200,14 @@ int main(int argc, char **argv)
                 patched_argv[di] = argv[si];
             }
         }
-        patched_argv[argc - 1] = 0;
+        patched_argv[--argc] = 0;
         argv = patched_argv;
+    }
+
+    if (verbose) {
+        for (int i = 0; i < argc; i++) {
+            vlog("argv[%d] = \"%s\"", i, argv[i] ? argv[i] : "(null)");
+        }
     }
 
 #ifdef WINDOWS
