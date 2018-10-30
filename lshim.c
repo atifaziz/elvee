@@ -215,8 +215,8 @@ int main(int argc, char **argv)
             || (major == lmajor && minor > lminor)
             || (major == lmajor && minor == lminor && patch > lpatch)
             || (major == lmajor && minor == lminor && patch == lpatch
-                && *lsuffix && *suffix
-                && strncmp(suffix, lsuffix, min(strlen(suffix), strlen(lsuffix))) > 0);
+                && *suffix && *lsuffix
+                && strncmp(suffix, lsuffix, min(1 + strlen(suffix), 1 + strlen(lsuffix))) > 0);
 
         vlog("upgrade: %u.%u.%u%s > %u.%u.%u%s ? %s", major, minor, patch, suffix, lmajor, lminor, lpatch, lsuffix, upgrade ? "yes" : "no");
 
