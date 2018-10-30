@@ -145,7 +145,7 @@ int main(int argc, char **argv)
     }
 
     unsigned int lmajor = 0, lminor = 0, lpatch = 0;
-    char lname[fldsiz(dirent, d_name) / sizeof(char)];
+    char lname[fldsiz(dirent, d_name) / sizeof(char)] = { 0 };
     struct dirent *dir;
 
     while ((errno = 0, dir = readdir(d)) != NULL) {
@@ -176,6 +176,11 @@ int main(int argc, char **argv)
     }
 
     closedir(d);
+
+    if (!*lname) {
+        fprintf(stderr, "No version found to run!\n");
+        return 1;
+    }
 
     char spawn_path[PATH_MAX];
     if (snprintf(spawn_path, DIM(spawn_path), "%s%s%s%s%s", path, PATH_SEPARATOR, lname, PATH_SEPARATOR, fname) >= DIM(spawn_path)) {
