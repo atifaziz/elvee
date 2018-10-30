@@ -133,8 +133,7 @@ int main(int argc, char **argv)
 
 #ifdef WINDOWS
 
-    char *ext = strrchr(fname, '.');
-    if (ext) {
+    if (strrchr(fname, '.')) {
         *strrchr(path, '.') = 0;
     }
 
