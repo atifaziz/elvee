@@ -62,7 +62,7 @@
 
 #define DIM(x) (sizeof(x) / sizeof((x)[0]))
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     char path[PATH_MAX];
     char fname[NAME_MAX];
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    char* pathsep = strrchr(path, PATH_SEPARATOR_CHAR);
+    char *pathsep = strrchr(path, PATH_SEPARATOR_CHAR);
     if (strlen(pathsep + 1) >= DIM(fname)) {
         fprintf(stderr, "File name is too long.\n");
         return 1;
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
 
 #ifdef WINDOWS
 
-    char* ext = strrchr(fname, '.');
+    char *ext = strrchr(fname, '.');
     if (ext) {
         *strrchr(path, '.') = 0;
     }
