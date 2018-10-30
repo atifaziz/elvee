@@ -65,7 +65,7 @@
 int main(int argc, char** argv)
 {
     char path[PATH_MAX];
-    char fname[PATH_MAX];
+    char fname[NAME_MAX];
     if (!realpath(argv[0], path)) {
         fprintf(stderr, "Error in directory listing.\n");
         return 1;
