@@ -72,6 +72,10 @@ int main(int argc, char** argv)
     }
 
     char* pathsep = strrchr(path, PATH_SEPARATOR_CHAR);
+    if (strlen(pathsep + 1) >= DIM(fname)) {
+        fprintf(stderr, "File name is too long.\n");
+        return 1;
+    }
     strcpy(fname, pathsep + 1);
     *(pathsep + 1) = 0;
 
