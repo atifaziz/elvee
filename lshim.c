@@ -88,6 +88,11 @@ int main(int argc, char **argv)
     strcpy(fname, pathsep + 1);
     *(pathsep + 1) = 0;
 
+    char *ext = strrchr(fname, '.');
+    if (ext) {
+        *ext = 0;
+    }
+
     DIR *d; d = opendir(path);
     if (!d) {
         print_op_error("opendir");
@@ -132,10 +137,6 @@ int main(int argc, char **argv)
     }
 
 #ifdef WINDOWS
-
-    if (strrchr(fname, '.')) {
-        *strrchr(path, '.') = 0;
-    }
 
     argv[0] = path;
     intptr_t result = _spawnv(_P_WAIT, path, argv);
