@@ -139,7 +139,13 @@ int main(int argc, char **argv)
     }
 
     argv[0] = path;
-    return _spawnv(_P_WAIT, path, argv);
+    intptr_t result = _spawnv(_P_WAIT, path, argv);
+    if (result == -1) {
+        printf_app_error("Error launching: %s\nReason: %s", path, strerror(errno));
+        return 1;
+    }
+
+    return result;
 
 #else // !WINDOWS
 
