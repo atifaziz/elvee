@@ -86,6 +86,10 @@ int verbose = 0;
 
 int main(int argc, char **argv)
 {
+    // Enable verbose logging to STDERR if an environment variable named
+    // `LSHIM_VERBOSE` or `lshim_verbose` is defined and its value is
+    // anything but 0.
+
     char *verbose_env;
     if (!(verbose_env = getenv("LSHIM_VERBOSE"))) {
         if (!(verbose_env = getenv("lshim_verbose"))) {
@@ -94,12 +98,16 @@ int main(int argc, char **argv)
     }
     verbose = strcmp("0", verbose_env) ? 1 : 0;
 
+    // Get the absolute path of this program.
+
     char path[PATH_MAX];
     char fname[NAME_MAX];
     if (!realpath(argv[0], path)) {
         print_op_error("realpath");
         return 1;
     }
+
+    // Split program directory path and file name.
 
     char *pathsep = strrchr(path, PATH_SEPARATOR_CHAR);
     if (strlen(pathsep + 1) >= DIM(fname)) {
@@ -109,6 +117,8 @@ int main(int argc, char **argv)
     strcpy(fname, pathsep + 1);
     *pathsep = 0;
 
+    // Blow away the file extension, if any.
+
     char *ext = strrchr(fname, '.');
     if (ext) {
         *ext = 0;
@@ -116,6 +126,14 @@ int main(int argc, char **argv)
 
     vlog("path: %s", path);
     vlog("fname: %s", fname);
+
+    // Has this program been renamed? If so then it will only look for that
+    // program's versions in sub-directories. Otherwise, the first argument is
+    // a template string that must have the token `\?\` (Windows) or `/?/`
+    // (*nix). The `?` in the token is then replace with the name of the
+    // latest version directory. The versions are scanned in the path to the
+    // left of the token. The path resulting from the replacement will be the
+    // path of the spawned program.
 
     char *p = fname;
     int is_lshim =  'l' == tolower(*p++)
@@ -140,6 +158,14 @@ int main(int argc, char **argv)
         }
     }
 
+    // Scan the directory for sub-directories whose name conforms to the
+    // following pattern:
+    //
+    //     "v" MAJOR [ "." MINOR [ "." PATCH ] ] [ "-" SUFFIX ]
+    //
+    // where MAJOR, MINOR and PATCH must be (when present) non-negative decimal
+    // integers. The SUFFIX is any string of characters and compared verbatim.
+
     vlog("opendir: %s", path);
     DIR *d; d = opendir(path);
     if (!d) {
@@ -153,10 +179,16 @@ int main(int argc, char **argv)
     struct dirent *dir;
 
     while ((errno = 0, dir = readdir(d)) != NULL) {
+
+        // Consider only directories that start with "v".
+
         int ignore = dir->d_type != DT_DIR || dir->d_name[0] != 'v';
         vlog("dir[%s]: (%x) %s", ignore ? "x" : " ", dir->d_type, dir->d_name);
         if (ignore)
             continue;
+
+        // Parse out tokens from the directory name.
+
         int major = 0, minor = 0, patch = 0;
         char suffix[DIM(lsuffix)] = { 0 };
         int tokens;
@@ -165,12 +197,19 @@ int main(int argc, char **argv)
                 tokens = sscanf(dir->d_name, "v%u%s", &major, suffix);
             }
         }
-        if (!tokens)
+
+        if (!tokens) // no tokens then loop around
             continue;
+
+        // Suffix must begin with a hyphen (-).
+
         int invalid_suffix = *suffix && *suffix != '-';
         vlog("tokens(%d): %u.%u.%u%s%s", tokens, major, minor, patch, suffix, invalid_suffix ? " (invalid suffix)" : "");
         if (invalid_suffix)
             continue;
+
+        // Does this entry sort higher than the last we know? Then...
+
         int upgrade
             =   major > lmajor
             || (major == lmajor && minor > lminor)
@@ -178,9 +217,11 @@ int main(int argc, char **argv)
             || (major == lmajor && minor == lminor && patch == lpatch
                 && *lsuffix && *suffix
                 && strncmp(suffix, lsuffix, min(strlen(suffix), strlen(lsuffix))) > 0);
+
         vlog("upgrade: %u.%u.%u%s > %u.%u.%u%s ? %s", major, minor, patch, suffix, lmajor, lminor, lpatch, lsuffix, upgrade ? "yes" : "no");
+
         if (upgrade) {
-            lmajor = major;
+            lmajor = major; // ... upgrade!
             lminor = minor;
             lpatch = patch;
             strcpy(lsuffix, suffix);
@@ -201,11 +242,16 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // Build up the path to the program to spawn.
+
     char spawn_path[PATH_MAX];
     if (snprintf(spawn_path, DIM(spawn_path), "%s%s%s%s%s", path, PATH_SEPARATOR, lname, PATH_SEPARATOR, fname) >= DIM(spawn_path)) {
         print_app_error("Final path is too long!");
         return 1;
     }
+
+    // If the first argument was a template remove it before passing on the
+    // rest of arguments to the program to spawn.
 
     argv[0] = spawn_path;
 
@@ -228,6 +274,8 @@ int main(int argc, char **argv)
             vlog("argv[%d] = \"%s\"", i, argv[i] ? argv[i] : "(null)");
         }
     }
+
+    // Shazam!
 
 #ifdef WINDOWS
 
