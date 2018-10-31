@@ -84,6 +84,8 @@ int verbose = 0;
 #undef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+void help();
+
 int main(int argc, char **argv)
 {
     // Enable verbose logging to STDERR if an environment variable named
@@ -146,7 +148,12 @@ int main(int argc, char **argv)
     if (is_lshim) {
         if (!template) {
             print_app_error("Missing target template argument.");
+            fprintf(stderr, "Run again with \"help\" (without quotes) as first argument for help.\n");
             return 1;
+        }
+        if (0 == strcmp(template, "help")) {
+            help();
+            return 0;
         }
         vlog("template: %s", template);
         char token[] = PATH_SEPARATOR "?" PATH_SEPARATOR;
@@ -311,4 +318,73 @@ int main(int argc, char **argv)
     return 0;
 
 #endif // WINDOWS
+}
+
+void help()
+{
+    char *text[] = {
+        "lshim - runs latest executable version",
+        "Copyright (c) 2018 Atif Aziz. All rights reserved.",
+        "",
+        "This program searches for the latest version of an executable and",
+        "runs it, passing along all arguments passed to it. To locate the",
+        "latest version it searches sub-directories that conform to the",
+        "following naming pattern:",
+        "",
+        "  \"v\" MAJOR [ \".\" MINOR [ \".\" PATCH ] ] [ \"-\" SUFFIX ]",
+        "",
+        "MAJOR, MINOR and PATCH must be non-negative decimal integers. The",
+        "SUFFIX is any string of characters starting with a hypen. If",
+        "present, it denotes a pre-release and which is compared ordinally to",
+        "any other pre-release suffix in the same version. Only MAJOR is",
+        "required. Below are examples of sub-directory names following this",
+        "pattern and how they would compare to each other, with the right-most",
+        "being considered the latest:",
+        "",
+        "  v1 < v2 < 3.0 < v3.0.1 < v3.1 < 3.1.1-beta < 3.1.1-rc < 3.1.1",
+        "",
+        "Note that folders named v2 and v2.0 and v2.0.0 will be considered to",
+        "be the same and any one may be chosen arbitrarily if version 2",
+        "represents the latest version so take care to avoid such ambiguities.",
+        "",
+        "Once the latest version directory has been identified, this program",
+        "will run an identically named executable from that directory. It is",
+        "therefore assumed that this program's file name will be renamed to",
+        "bear the same name as the actual target program to run, with this",
+        "program acting as a mere thunk/trampoline/selector.",
+        "",
+        "On a Windows system, the target executable can be a binary with an",
+        "extension of \".com\" or \".exe\", or a batch script with an extension",
+        " of \".bat\" or \".cmd\".",
+        "",
+        "If this program's filename is left exactly \"lshim\" then there is a",
+        "second mode of operation where the first required argument specifies",
+        "a template following the syntax (replace / with \\ on Windows):",
+        "",
+        "  SEARCH_PATH \"/?/\" SUB_PATH",
+        "",
+        "SEARCH_PATH is a relative or absolute directory path where the latest",
+        "version sub-directory will be sought based on the earlier explanation",
+        "and SUB_PATH is the path to the executale to run within the latest",
+        "version sub-directory. The question mark effectively gets replaced",
+        "with the latest version number at run-time. Suppose the following",
+        "invocation:",
+        "",
+        "  lshim /app/?/bin/foo bar baz",
+        "",
+        "Suppose further that the latest version directory under \"/app\" is",
+        "called \"v4.2\". This program will then operate as if you intended",
+        "to type the following on the command line:",
+        "",
+        "  /app/v4.2/bin/foo bar baz",
+        "",
+        "For dianostics, this program will display verbose output to STDERR",
+        "if the environment variable LSHIM_VERBOSE is defined to be any value",
+        "but zero (0).",
+        ""
+    };
+
+    for (int i = 0; i < DIM(text); i++) {
+        puts(text[i]);
+    }
 }
