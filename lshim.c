@@ -85,6 +85,7 @@ int verbose = 0;
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 void help();
+void license();
 
 int main(int argc, char **argv)
 {
@@ -153,6 +154,10 @@ int main(int argc, char **argv)
         }
         if (0 == strcmp(template, "help")) {
             help();
+            return 0;
+        }
+        if (0 == strcmp(template, "license")) {
+            license();
             return 0;
         }
         vlog("template: %s", template);
@@ -325,6 +330,7 @@ void help()
     char *text[] = {
         "lshim - runs latest executable version",
         "Copyright (c) 2018 Atif Aziz. All rights reserved.",
+        "Licensed under The MIT License: https://opensource.org/licenses/MIT",
         "",
         "This program searches for the latest version of an executable and",
         "runs it, passing along all arguments passed to it. To locate the",
@@ -381,7 +387,39 @@ void help()
         "For dianostics, this program will display verbose output to STDERR",
         "if the environment variable LSHIM_VERBOSE is defined to be any value",
         "but zero (0).",
-        ""
+        "",
+        "This program is distributed under the terms and conditions of",
+        "The MIT License. Run the program with \"license\" (without quotes) as",
+        "the first argument to display the full text of the license.",
+    };
+
+    for (int i = 0; i < DIM(text); i++) {
+        puts(text[i]);
+    }
+}
+
+void license()
+{
+    char *text[] = {
+        "Copyright (C) 2018 Atif Aziz",
+        "",
+        "Permission is hereby granted, free of charge, to any person obtaining a",
+        "copy of this software and associated documentation files (the \"Software\"),",
+        "to deal in the Software without restriction, including without limitation",
+        "the rights to use, copy, modify, merge, publish, distribute, sublicense,",
+        "and/or sell copies of the Software, and to permit persons to whom the",
+        "Software is furnished to do so, subject to the following conditions:",
+        "",
+        "The above copyright notice and this permission notice shall be included",
+        "in all copies or substantial portions of the Software.",
+        "",
+        "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
+        "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
+        "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL",
+        "THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
+        "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING",
+        "FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER",
+        "DEALINGS IN THE SOFTWARE.",
     };
 
     for (int i = 0; i < DIM(text); i++) {
