@@ -2,5 +2,5 @@
 setlocal
 pushd "%~dp0"
 if "%1"=="" set CLARGS=/MD /O1
-cl %CLARGS% %* lshim.c
+cl %CLARGS% %* elvee.c
 popd

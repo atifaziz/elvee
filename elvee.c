@@ -71,7 +71,8 @@
 #define printf_app_error(msg, ...) \
     fprintf(stderr, msg "\nat: %s:%d\n", __VA_ARGS__, __FILE__, __LINE__)
 
-#define tolower(ch) ((ch) | 0x20)
+#define ascii_tolower(ch) \
+    ((ch) >= 'A' && (ch) <= 'Z' ? (ch) | 0x20 : (ch))
 
 #define log(format, ...) \
     fprintf(stderr, "%s(%d):" format "\n", __FILE__, __LINE__, __VA_ARGS__)
@@ -84,18 +85,24 @@ int verbose = 0;
 #undef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+#define PROGRAM_NAME "elvee"
+#define PROGRAM_NAME_UPPER "ELVEE"
+
+char program_name[] = PROGRAM_NAME;
+
 void help();
 void license();
+int ascii_strcmpi(char *s1, char *s2);
 
 int main(int argc, char **argv)
 {
     // Enable verbose logging to STDERR if an environment variable named
-    // `LSHIM_VERBOSE` or `lshim_verbose` is defined and its value is
+    // `ELVEE_VERBOSE` or `elvee_verbose` is defined and its value is
     // anything but 0.
 
     char *verbose_env;
-    if (!(verbose_env = getenv("LSHIM_VERBOSE"))) {
-        if (!(verbose_env = getenv("lshim_verbose"))) {
+    if (!(verbose_env = getenv(PROGRAM_NAME_UPPER "_VERBOSE"))) {
+        if (!(verbose_env = getenv(PROGRAM_NAME "_verbose"))) {
             verbose_env = "0";
         }
     }
@@ -138,12 +145,7 @@ int main(int argc, char **argv)
     // left of the token. The path resulting from the replacement will be the
     // path of the spawned program.
 
-    char *p = fname;
-    int is_lshim =  'l' == tolower(*p++)
-                 && 's' == tolower(*p++)
-                 && 'h' == tolower(*p++)
-                 && 'i' == tolower(*p++)
-                 && 'm' == tolower(*p++);
+    int is_lshim = 0 == ascii_strcmpi(fname, program_name);
 
     char *template = argv[1];
     if (is_lshim) {
@@ -325,10 +327,19 @@ int main(int argc, char **argv)
 #endif // WINDOWS
 }
 
+int ascii_strcmpi(char *s1, char *s2)
+{
+    int cmp;
+    for (cmp = 0; 0 == cmp && (*s1 || *s2); s1++, s2++) {
+        cmp = ascii_tolower(*s1) - ascii_tolower(*s2);
+    }
+    return cmp;
+}
+
 void help()
 {
     char *text[] = {
-        "lshim - runs latest executable version",
+        PROGRAM_NAME" - runs latest executable version",
         "Copyright (c) 2018 Atif Aziz. All rights reserved.",
         "Licensed under The MIT License: https://opensource.org/licenses/MIT",
         "",
@@ -363,7 +374,7 @@ void help()
         "extension of \".com\" or \".exe\", or a batch script with an extension",
         " of \".bat\" or \".cmd\".",
         "",
-        "If this program's filename is left exactly \"lshim\" then there is a",
+        "If this program's filename is left exactly \""PROGRAM_NAME"\" then there is a",
         "second mode of operation where the first required argument specifies",
         "a template following the syntax (replace / with \\ on Windows):",
         "",
@@ -376,7 +387,7 @@ void help()
         "with the latest version number at run-time. Suppose the following",
         "invocation:",
         "",
-        "  lshim /app/?/bin/foo bar baz",
+        "  "PROGRAM_NAME" /app/?/bin/foo bar baz",
         "",
         "Suppose further that the latest version directory under \"/app\" is",
         "called \"v4.2\". This program will then operate as if you intended",
@@ -385,7 +396,7 @@ void help()
         "  /app/v4.2/bin/foo bar baz",
         "",
         "For dianostics, this program will display verbose output to STDERR",
-        "if the environment variable LSHIM_VERBOSE is defined to be any value",
+        "if the environment variable "PROGRAM_NAME_UPPER"_VERBOSE is defined to be any value",
         "but zero (0).",
         "",
         "This program is distributed under the terms and conditions of",
