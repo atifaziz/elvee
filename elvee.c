@@ -92,6 +92,7 @@ char program_name[] = PROGRAM_NAME;
 
 void help();
 void license();
+void timestamp();
 int ascii_strcmpi(char *s1, char *s2);
 
 int main(int argc, char **argv)
@@ -160,6 +161,10 @@ int main(int argc, char **argv)
         }
         if (0 == strcmp(template, "license")) {
             license();
+            return 0;
+        }
+        if (0 == strcmp(template, "timestamp")) {
+            timestamp();
             return 0;
         }
         vlog("template: %s", template);
@@ -402,6 +407,8 @@ void help()
         "This program is distributed under the terms and conditions of",
         "The MIT License. Run the program with \"license\" (without quotes) as",
         "the first argument to display the full text of the license.",
+        "",
+        "This program was compiled on " __DATE__ " at " __TIME__ "."
     };
 
     for (int i = 0; i < DIM(text); i++) {
@@ -436,4 +443,14 @@ void license()
     for (int i = 0; i < DIM(text); i++) {
         puts(text[i]);
     }
+}
+
+void timestamp()
+{
+    char month_name[4];
+    unsigned short year, month, day, hour, min, sec;
+    char *month_names = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec";
+    sscanf(__DATE__ " " __TIME__, "%s %hu %hu %hu:%hu:%hu", month_name, &day, &year, &hour, &min, &sec);
+    month = (strstr(month_names, month_name) - month_names) / 4 + 1;
+    printf("%04hu-%02hu-%02hu %02hu:%02hu:%02hu\n", year, month, day, hour, min, sec);
 }
