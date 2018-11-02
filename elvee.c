@@ -87,6 +87,7 @@ int verbose = 0;
 
 #define PROGRAM_NAME "elvee"
 #define PROGRAM_NAME_UPPER "ELVEE"
+#define PROGRAM_VERSION "1.0"
 
 char program_name[] = PROGRAM_NAME;
 
@@ -344,7 +345,7 @@ int ascii_strcmpi(char *s1, char *s2)
 void help()
 {
     char *text[] = {
-        PROGRAM_NAME" - runs latest executable version",
+        PROGRAM_NAME" "PROGRAM_VERSION" - runs latest executable version",
         "Copyright (c) 2018 Atif Aziz. All rights reserved.",
         "Licensed under The MIT License: https://opensource.org/licenses/MIT",
         "",
