@@ -146,10 +146,10 @@ int main(int argc, char **argv)
     // left of the token. The path resulting from the replacement will be the
     // path of the spawned program.
 
-    int is_lshim = 0 == ascii_strcmpi(fname, program_name);
+    int has_orig_name = 0 == ascii_strcmpi(fname, program_name);
 
     char *template = argv[1];
-    if (is_lshim) {
+    if (has_orig_name) {
         if (!template) {
             print_app_error("Missing target template argument.");
             fprintf(stderr, "Run again with \"help\" (without quotes) as first argument for help.\n");
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 
     argv[0] = spawn_path;
 
-    if (is_lshim) {
+    if (has_orig_name) {
         char **patched_argv = alloca(argc * sizeof(patched_argv[0]));
         for (int si = 0, di = 0; si < argc; si++, di++) {
             if (1 == si) {
