@@ -1,0 +1,31 @@
+version: '{build}'
+image:
+  - Visual Studio 2017
+  - Ubuntu
+skip_commits:
+  files:
+    - '*.md'
+    - '*.txt'
+skip_tags: true
+install:
+  - sh: sudo apt-get update
+  - sh: sudo apt-get -y install build-essential
+  - sh: sudo apt-get -y install clang-3.8
+  - sh: sudo ln -s /usr/bin/clang-3.8 /usr/bin/clang
+build_script:
+  - cmd: call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+  - cmd: build.cmd
+  - sh: ./build.sh
+after_build:
+  - cmd: 7z a -tzip elvee-win.zip LICENSE elvee.exe
+  - sh: tar cfz elvee-ubuntu.tar.gz LICENSE elvee
+artifacts:
+  - path: '*.zip'
+  - path: '*.tar.gz'
+notifications:
+- provider: Email
+  to:
+  - raboof-ci@googlegroups.com
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: false
