@@ -2,15 +2,15 @@
 
 `elvee` is a small shim/thunk for running the latest version of any
 executable, be that a shell script or a compiled/native binary. Each version
-resides in its own directory and all invocations must then the shim instead
-of the original.
+resides in its own directory and all invocations must then use the shim
+instead of the original.
 
 It is written in C and designed to work on Windows, macOS and Linux.
 
-It presents a simple solution to the problem of upgrading an executable,
-especially one that may be a long-running process, while it is in use.
-Existing versions that are in flight do not have to be stopped. Newer
-invocations will start the latest deployed version.
+It presents a simple solution to the problem of upgrading an executable
+while it is in use, especially one that may be a long-running process.
+Existing versions that are in-flight do not have to be stopped. Newer
+invocations will pick up the latest deployed version.
 
 It searches for the latest version of an executable and runs it, passing
 along all arguments passed to it. To locate the latest version it searches
