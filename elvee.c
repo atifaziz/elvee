@@ -95,6 +95,7 @@ void help();
 void license();
 void timestamp();
 int ascii_strcmpi(char *s1, char *s2);
+char *argv_quote(char *arg);
 
 int main(int argc, char **argv)
 {
@@ -303,6 +304,9 @@ int main(int argc, char **argv)
 
 #ifdef WINDOWS
 
+    for (int i = 0; i < argc; i++) {
+      argv[i] = argv_quote(argv[i]);
+    }
     intptr_t result = _spawnv(_P_WAIT, spawn_path, argv);
     if (result == -1) {
         printf_app_error("Error launching: %s\nReason: %s", spawn_path, strerror(errno));
@@ -454,4 +458,71 @@ void timestamp()
     sscanf(__DATE__ " " __TIME__, "%s %hu %hu %hu:%hu:%hu", month_name, &day, &year, &hour, &min, &sec);
     month = (strstr(month_names, month_name) - month_names) / 4 + 1;
     printf("%04hu-%02hu-%02hu %02hu:%02hu:%02hu\n", year, month, day, hour, min, sec);
+}
+
+// Adapted from https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
+// See issue #1
+// The returned pointer is a new allocation, but leaking it is fine.
+char *argv_quote(char *arg) {
+    int needs_quote = 0;
+    int escape_count = 0;
+    int arglen = 0;
+    for (char *p = arg; *p != '\0'; p++) {
+        if (*p == ' ' || *p == '\t' || *p == '\v' || *p == '"') {
+            needs_quote = 1;
+        }
+        if (*p == '\\' || *p == '"') {
+            escape_count += 1;
+        }
+        arglen += 1;
+    }
+
+    if (arglen == 0 || !needs_quote) {
+        return arg;
+    }
+
+    // One byte for each potentially added backslash.
+    // Can overallocate, but that's very unlikely to matter.
+    char *out = malloc(arglen + escape_count);
+    char *outp = out;
+
+    *outp++ = '"';
+
+    for (char *p = arg; *p != '\0'; p++) {
+        int slashc = 0;
+
+        while (*p == '\\') {
+            ++p;
+            ++slashc;
+        }
+
+        if (*p == '\0') {
+            // Escape all backslashes, but let the terminating
+            // double quotation mark we add below be interpreted
+            // as a metacharacter.
+            for (int i = 0; i < slashc * 2; i++) {
+                // There's a Linus quote about indenting this much
+                *outp++ = '\\';
+            }
+            break;
+        }
+        else if (*p == '"') {
+            // Escape all backslashes and the following
+            // double quotation mark.
+            for (int i = 0; i < slashc * 2 + 1; i++) {
+                *outp++ = '\\';
+            }
+        }
+        else {
+            // Backslashes aren't special here.
+            for (int i = 0; i < slashc; i++) {
+                *outp++ = '\\';
+            }
+        }
+        *outp++ = *p;
+    }
+
+    *outp++ = '"';
+    *outp = '\0';
+    return out;
 }
