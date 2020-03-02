@@ -305,7 +305,7 @@ int main(int argc, char **argv)
 #ifdef WINDOWS
 
     for (int i = 0; i < argc; i++) {
-      argv[i] = argv_quote(argv[i]);
+        argv[i] = argv_quote(argv[i]);
     }
     intptr_t result = _spawnv(_P_WAIT, spawn_path, argv);
     if (result == -1) {
@@ -463,7 +463,8 @@ void timestamp()
 // Adapted from https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
 // See issue #1
 // The returned pointer is a new allocation, but leaking it is fine.
-char *argv_quote(char *arg) {
+char *argv_quote(char *arg)
+{
     int needs_quote = 0;
     int escape_count = 0;
     int arglen = 0;
