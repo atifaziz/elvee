@@ -6,12 +6,15 @@ skip_commits:
   files:
     - '*.md'
     - '*.txt'
+branches:
+  only:
+    - master
+  except:
+    - /.+[\-.]wip$/
+    - wip
+pull_requests:
+  do_not_increment_build_number: true
 skip_tags: true
-install:
-  - sh: sudo apt-get update
-  - sh: sudo apt-get -y install build-essential
-  - sh: sudo apt-get -y install clang-3.8
-  - sh: sudo ln -s /usr/bin/clang-3.8 /usr/bin/clang
 build_script:
   - cmd: call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - cmd: build.cmd
