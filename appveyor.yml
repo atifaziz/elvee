@@ -6,6 +6,12 @@ skip_commits:
   files:
     - '*.md'
     - '*.txt'
+branches:
+  only:
+    - master
+  except:
+    - /.+[\-.]wip$/
+    - wip
 skip_tags: true
 build_script:
   - cmd: call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
