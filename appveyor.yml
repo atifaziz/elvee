@@ -1,7 +1,12 @@
 version: '{build}'
-image:
-  - Visual Studio 2017
-  - Ubuntu
+environment:
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      IMAGE_NAME: win
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      IMAGE_NAME: ubuntu-18.04-bionic
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+      IMAGE_NAME: ubuntu-16.04-xenial
 skip_commits:
   files:
     - '*.md'
@@ -20,8 +25,8 @@ build_script:
   - cmd: build.cmd
   - sh: ./build.sh
 after_build:
-  - cmd: 7z a -tzip elvee-win.zip LICENSE elvee.exe
-  - sh: tar cfz elvee-ubuntu.tar.gz LICENSE elvee
+  - cmd: 7z a -tzip elvee-%IMAGE_NAME%.zip LICENSE elvee.exe
+  - sh: tar cfz elvee-${IMAGE_NAME}.tar.gz LICENSE elvee
 artifacts:
   - path: '*.zip'
   - path: '*.tar.gz'
