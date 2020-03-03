@@ -304,10 +304,17 @@ int main(int argc, char **argv)
 
 #ifdef WINDOWS
 
+    char **qargv = malloc(sizeof(char*) * argc);
     for (int i = 0; i < argc; i++) {
-        argv[i] = argv_quote(argv[i]);
+        char *qarg = argv_quote(argv[i]);
+        qargv[i] = qarg == argv[i] ? NULL : qarg;
+        argv[i] = qarg;
     }
     intptr_t result = _spawnv(_P_WAIT, spawn_path, argv);
+    for (int i = 0; i < argc; i++) {
+        free(qargv[i]);
+    }
+    free(qargv);
     if (result == -1) {
         printf_app_error("Error launching: %s\nReason: %s", spawn_path, strerror(errno));
         return 1;
@@ -462,7 +469,7 @@ void timestamp()
 
 // Adapted from https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
 // See issue #1
-// The returned pointer is a new allocation, but leaking it is fine.
+
 char *argv_quote(char *arg)
 {
     int needs_quote = 0;
