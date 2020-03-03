@@ -304,17 +304,31 @@ int main(int argc, char **argv)
 
 #ifdef WINDOWS
 
-    char **qargv = malloc(sizeof(char*) * argc);
+    // Quote arguments if necessary and track those quoted.
+
+    char **qargv = NULL;
     for (int i = 0; i < argc; i++) {
         char *qarg = argv_quote(argv[i]);
-        qargv[i] = qarg == argv[i] ? NULL : qarg;
+        if (qarg != argv[i]) {
+            if (qargv == NULL) {
+                qargv = calloc(argc, sizeof(char*));
+            }
+            qargv[i] = qarg;
+        }
         argv[i] = qarg;
     }
+
     intptr_t result = _spawnv(_P_WAIT, spawn_path, argv);
-    for (int i = 0; i < argc; i++) {
-        free(qargv[i]);
+
+    // Free any quote arguments, including their tracking.
+
+    if (qargv) {
+        for (int i = 0; i < argc; i++) {
+            free(qargv[i]);
+        }
+        free(qargv);
     }
-    free(qargv);
+
     if (result == -1) {
         printf_app_error("Error launching: %s\nReason: %s", spawn_path, strerror(errno));
         return 1;
