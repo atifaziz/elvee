@@ -313,7 +313,7 @@ int main(int argc, char **argv)
             if (qargv == NULL) {
                 qargv = calloc(argc, sizeof(char*));
             }
-            qargv[i] = qarg;
+            qargv[i] = argv[i];
         }
         argv[i] = qarg;
     }
@@ -321,10 +321,14 @@ int main(int argc, char **argv)
     intptr_t result = _spawnv(_P_WAIT, spawn_path, argv);
 
     // Free any quoted arguments, including their tracking.
+    // Restore argv to its original state.
 
     if (qargv) {
         for (int i = 0; i < argc; i++) {
-            free(qargv[i]);
+            if (qargv[i]) {
+                free(argv[i]);
+                argv[i] = qargv[i];
+            }
         }
         free(qargv);
     }
