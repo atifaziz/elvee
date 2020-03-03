@@ -87,7 +87,7 @@ int verbose = 0;
 
 #define PROGRAM_NAME "elvee"
 #define PROGRAM_NAME_UPPER "ELVEE"
-#define PROGRAM_VERSION "1.0"
+#define PROGRAM_VERSION "1.1"
 
 char program_name[] = PROGRAM_NAME;
 
