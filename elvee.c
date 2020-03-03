@@ -483,6 +483,9 @@ void timestamp()
 
 // Adapted from https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
 // See issue #1
+// If quoting is needed then a newly allocated string is returned with with
+// "arg" content copied, quoted and escaped. If quoting is unnecessary then
+// "arg" is returned as-is.
 
 char *argv_quote(char *arg)
 {
