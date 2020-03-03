@@ -320,7 +320,7 @@ int main(int argc, char **argv)
 
     intptr_t result = _spawnv(_P_WAIT, spawn_path, argv);
 
-    // Free any quote arguments, including their tracking.
+    // Free any quoted arguments, including their tracking.
 
     if (qargv) {
         for (int i = 0; i < argc; i++) {
